@@ -3,9 +3,11 @@
 	import { saveGameStats } from '$lib/localStorage';
 	import type { IGameStats } from '$lib/types';
 	import { statStore } from '$lib/game/statStore';
+	import { gameModeStore } from '$lib/game/gameModeStore';
 	import { svordleShareData, svordleWriteClipboardText } from '$lib/share';
 	import { toastStore } from '$components/Toast';
 	import { tick } from 'svelte';
+	import { get } from 'svelte/store';
 
 	let importExportView = 'export';
 	let importTextarea = '';
@@ -31,7 +33,7 @@
 			'Are you sure you want to override the statistics on this device? This action is not reversable.'
 		);
 		if (confirmation) {
-			saveGameStats(parsed as unknown as IGameStats);
+			saveGameStats(parsed as unknown as IGameStats, get(gameModeStore));
 			alert('Site will now reload');
 			window.location.reload();
 		}

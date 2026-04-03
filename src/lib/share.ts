@@ -1,9 +1,10 @@
 import { UAParser } from 'ua-parser-js';
-import type { Guess } from './types';
+import type { Guess, WordLengthMode } from './types';
 import { gameStore } from './game/stateStore';
 import { get } from 'svelte/store';
-import { solutionIndex } from './game/helpers';
-import { MAX_CHALLENGES } from '../constants/settings';
+import { getSolutionForMode } from './game/helpers';
+import { GAME_MODES } from '../constants/settings';
+import { gameModeStore } from './game/gameModeStore';
 
 const parser = new UAParser();
 const browser = parser.getBrowser();
@@ -72,10 +73,13 @@ function generateEmojiGrid(tiles: Map<'present' | 'correct' | 'mode', string>, g
 
 export async function shareGameStatus(isHighContrast: boolean, isDarkMode: boolean, lost: boolean) {
 	const gameState = get(gameStore);
+	const mode = get(gameModeStore);
+	const { solutionIndex } = getSolutionForMode(mode);
+	const maxChallenges = GAME_MODES[mode].maxChallenges;
 
-	let scoreHeader = `Svordle ${solutionIndex + 1} ${
+	let scoreHeader = `Svordle ${mode}L #${solutionIndex + 1} ${
 		lost ? 'X' : gameState.guesses.length
-	}/${MAX_CHALLENGES}`;
+	}/${maxChallenges}`;
 
 	if (gameState.isHardMode) scoreHeader = `${scoreHeader} *`;
 
@@ -84,7 +88,7 @@ export async function shareGameStatus(isHighContrast: boolean, isDarkMode: boole
 		text: `${scoreHeader}\n\n${generateEmojiGrid(
 			generateTiles(isHighContrast, isDarkMode),
 			gameState.guesses
-		)}\n\nhttps://word.samtheq.com`
+		)}`
 	};
 
 	const didShare = await svordleShareData(dataToShare);

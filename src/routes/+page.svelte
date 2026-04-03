@@ -2,11 +2,19 @@
 	import { Grid } from '../components/Grid';
 	import { Keyboard } from '../components/Keyboard';
 	import { toastStore } from '../components/Toast';
-	import { WIN_MESSAGES, solution } from '$lib/game/helpers';
+	import { WIN_MESSAGES, getSolutionForMode } from '$lib/game/helpers';
 	import { gameStore } from '$lib/game/stateStore';
+	import { gameModeStore, modeChangeSignal } from '$lib/game/gameModeStore';
 	import type { CharValue } from '$lib/types';
 
 	let currentGuess: CharValue[] = [];
+
+	// Reset currentGuess when mode changes
+	$: if ($modeChangeSignal) {
+		currentGuess = [];
+	}
+
+	$: currentSolution = getSolutionForMode($gameModeStore).solution;
 
 	$: {
 		if ($gameStore.playState === 'won') {
@@ -19,7 +27,7 @@
 		} else if ($gameStore.playState === 'lost') {
 			toastStore.show({
 				dismissible: false,
-				message: `The word was ${solution}`,
+				message: `The word was ${currentSolution}`,
 				type: 'error',
 				id: 'losetoast',
 				timeout: 2000

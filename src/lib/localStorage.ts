@@ -1,19 +1,29 @@
-import type { IGameStats } from './types';
+import type { IGameStats, WordLengthMode } from './types';
 
 interface IStoredGameState {
 	guesses: string[];
 	solution?: string;
 }
 
-export const gameStateKey = 'sw-gameState';
-
-export function saveGameState(obj: IStoredGameState) {
-	localStorage.setItem(gameStateKey, JSON.stringify(obj));
+// Mode-specific keys
+export function gameStateKey(mode: WordLengthMode) {
+	return `sw-gameState-${mode}`;
+}
+export function statsKey(mode: WordLengthMode) {
+	return `sw-gameStats-${mode}`;
 }
 
-export function loadGameState(): IStoredGameState {
+// Legacy keys (for backward compat / debug)
+export const legacyGameStateKey = 'sw-gameState';
+export const legacyStatsKey = 'sw-gameStats';
+
+export function saveGameState(obj: IStoredGameState, mode: WordLengthMode) {
+	localStorage.setItem(gameStateKey(mode), JSON.stringify(obj));
+}
+
+export function loadGameState(mode: WordLengthMode): IStoredGameState {
 	try {
-		const state = localStorage.getItem(gameStateKey);
+		const state = localStorage.getItem(gameStateKey(mode));
 		if (!state) return { guesses: [] };
 		const parsed = JSON.parse(state) as Record<string, unknown>;
 		if ('guesses' in parsed) {
@@ -25,15 +35,13 @@ export function loadGameState(): IStoredGameState {
 	}
 }
 
-export const statsKey = 'sw-gameStats';
-
-export function saveGameStats(state: IGameStats) {
-	localStorage.setItem(statsKey, JSON.stringify(state));
+export function saveGameStats(state: IGameStats, mode: WordLengthMode) {
+	localStorage.setItem(statsKey(mode), JSON.stringify(state));
 }
 
-export function loadStats(defaultShape: IGameStats, ...keys: (keyof IGameStats)[]): IGameStats {
+export function loadStats(defaultShape: IGameStats, mode: WordLengthMode, ...keys: (keyof IGameStats)[]): IGameStats {
 	try {
-		const stats = localStorage.getItem(statsKey);
+		const stats = localStorage.getItem(statsKey(mode));
 		if (!stats) return defaultShape;
 		const parsed = JSON.parse(stats) as Record<string, unknown>;
 		if (keys.every((k) => k in parsed)) return parsed as unknown as IGameStats;

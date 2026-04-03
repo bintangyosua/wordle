@@ -1,21 +1,27 @@
 <script lang="ts">
 	import { gameStore } from '$lib/game/stateStore';
+	import { gameModeStore, currentWordLength, currentMaxChallenges } from '$lib/game/gameModeStore';
+	import { getSolutionForMode, isWordInWordListForMode } from '$lib/game/helpers';
 	import type { CharValue } from '$lib/types';
-	import { MAX_CHALLENGES, MAX_WORD_LENGTH } from '$constants/settings';
 	import Key from './Key.svelte';
 	import { keyboardStore } from './store';
-	import { isWordInWordList } from '$lib/game/helpers';
 	import { toastStore } from '$components/Toast';
+	import { get } from 'svelte/store';
 
 	export let currentGuess: CharValue[] = [];
 
-	$: shouldNotType = $gameStore.playState !== 'playing' || $keyboardStore.disabled;
+	// Block typing only when game is over
+	$: shouldNotType = $gameStore.playState !== 'playing';
+	// Block submit during animation OR when game is over
+	$: shouldNotSubmit = $gameStore.playState !== 'playing' || $keyboardStore.disabled;
 
 	function onChar(value: CharValue) {
 		if (shouldNotType) return;
+		const wordLen = $currentWordLength;
+		const maxCh = $currentMaxChallenges;
 		if (
-			currentGuess.length < MAX_WORD_LENGTH &&
-			$gameStore.guesses.length < MAX_CHALLENGES &&
+			currentGuess.length < wordLen &&
+			$gameStore.guesses.length < maxCh &&
 			$gameStore.playState === 'playing'
 		) {
 			currentGuess.push(value);
@@ -32,8 +38,10 @@
 	}
 
 	function onEnter() {
-		if (shouldNotType) return;
-		if (currentGuess.length !== MAX_WORD_LENGTH) {
+		if (shouldNotSubmit) return;
+		const wordLen = $currentWordLength;
+		const mode = $gameModeStore;
+		if (currentGuess.length !== wordLen) {
 			toastStore.show({
 				message: 'There are not enough letters',
 				timeout: 3000,
@@ -42,7 +50,7 @@
 			});
 			return;
 		}
-		if (!isWordInWordList(currentGuess.join(''))) {
+		if (!isWordInWordListForMode(currentGuess.join(''), mode)) {
 			toastStore.show({
 				timeout: 3000,
 				dismissible: false,
@@ -51,8 +59,19 @@
 			});
 			return;
 		}
+		const alreadyGuessed = $gameStore.guesses.some(
+			(g) => g.letters.join('') === currentGuess.join('')
+		);
+		if (alreadyGuessed) {
+			toastStore.show({
+				timeout: 3000,
+				dismissible: false,
+				message: 'Word already guessed',
+				type: 'warn'
+			});
+			return;
+		}
 		gameStore.hardModeHelper(currentGuess);
-		// If playing hard mode, and there was an error, break out
 		if ($gameStore.isHardMode && $gameStore.hardModeError) return;
 		keyboardStore.setDisabled(true);
 		gameStore.addGuess(currentGuess);

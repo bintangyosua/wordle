@@ -4,10 +4,12 @@
 	import { browser } from '$app/environment';
 	import { page } from '$app/stores';
 	import type { LayoutData } from './$types';
+	import type { WordLengthMode } from '$lib/types';
 	import { gameStateKey, saveHighContrast, saveIsDarkMode, statsKey } from '$lib/localStorage';
-	import { MAX_CHALLENGES, MAX_WORD_LENGTH } from '$constants/settings';
+	import { GAME_MODES } from '$constants/settings';
 	import { statStore } from '$lib/game/statStore';
 	import { gameStore } from '$lib/game/stateStore';
+	import { gameModeStore, currentWordLength, currentMaxChallenges, modeChangeSignal } from '$lib/game/gameModeStore';
 	import Toggle from '$components/Toggle.svelte';
 	import Modal from '$components/Modal.svelte';
 	import { keyboardStore } from '$components/Keyboard';
@@ -42,6 +44,15 @@
 
 	let isHardMode = $gameStore.isHardMode;
 	$: gameStore.setHardMode(isHardMode);
+
+	const modes: WordLengthMode[] = [4, 5, 6];
+	function switchMode(mode: WordLengthMode) {
+		if (mode === $gameModeStore) return;
+		gameModeStore.setMode(mode);
+		gameStore.reinitialize(mode);
+		statStore.reinitialize(mode);
+		modeChangeSignal.update(n => n + 1);
+	}
 
 	async function showCopyResponse() {
 		const { didShare, didCopy } = await shareGameStatus(
@@ -103,7 +114,21 @@
 			</svg>
 		</button>
 	</section>
-	<h1 class="app-title">Svordle</h1>
+	<div class="title-area">
+		<h1 class="app-title">Svordle</h1>
+		<div class="mode-selector">
+			{#each modes as mode}
+				<button
+					class="mode-btn"
+					class:mode-active={$gameModeStore === mode}
+					on:click={() => switchMode(mode)}
+					aria-label="{mode} letter mode"
+				>
+					{mode}
+				</button>
+			{/each}
+		</div>
+	</div>
 	<section class="flex items-center justify-end gap-x-1 pr-2">
 		<button class="header-btn" on:click={stats.openModal} aria-label="Statistics">
 			<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16">
@@ -133,7 +158,7 @@
 	<div class="help">
 		<section>
 			<p>
-				Guess the word in {MAX_CHALLENGES} tries. Each guess must be a valid {MAX_WORD_LENGTH} letter
+				Guess the word in {$currentMaxChallenges} tries. Each guess must be a valid {$currentWordLength} letter
 				word.
 			</p>
 			<p>
@@ -204,8 +229,8 @@
 	</div>
 	{#if import.meta.env.DEV}
 		<div class="debug-section">
-			<button class="debug-btn" on:click={() => { browser && localStorage.removeItem(gameStateKey); gameStore.reset(); keyboardStore.reset(); toastStore.show({ message: '[DEBUG] Game State Reset', type: 'info', timeout: 2000, dismissible: false }); settings.closeModal(); }}>Reset Game State</button>
-			<button class="debug-btn" on:click={() => { browser && localStorage.removeItem(statsKey); statStore.reset(); toastStore.show({ message: '[DEBUG] Game Stats Reset', type: 'info', timeout: 2000, dismissible: false }); settings.closeModal(); }}>Reset Game Stats</button>
+			<button class="debug-btn" on:click={() => { browser && localStorage.removeItem(gameStateKey($gameModeStore)); gameStore.reset(); keyboardStore.reset(); toastStore.show({ message: '[DEBUG] Game State Reset', type: 'info', timeout: 2000, dismissible: false }); settings.closeModal(); }}>Reset Game State</button>
+			<button class="debug-btn" on:click={() => { browser && localStorage.removeItem(statsKey($gameModeStore)); statStore.reset(); toastStore.show({ message: '[DEBUG] Game Stats Reset', type: 'info', timeout: 2000, dismissible: false }); settings.closeModal(); }}>Reset Game Stats</button>
 		</div>
 	{/if}
 </Modal>
@@ -247,13 +272,8 @@
 <Modal {onClose} {onOpen} bind:this={about}>
 	<h3 slot="header" class="modal-title">Svordle {version}</h3>
 	<div class="about-content">
-		<p>Built to learn Svelte, rebuilt with SvelteKit in 2023.</p>
-		<p>The code is open source and available on GitHub:</p>
-		<a href="https://github.com/SamuelQuinones/svelte-wordle" target="_blank" class="about-link-btn">
-			<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" style="vertical-align: -0.15em;" viewBox="0 0 16 16">
-				<path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z" />
-			</svg> View Source
-		</a>
+		<p>A word-guessing game inspired by Wordle, built with SvelteKit.</p>
+		<p>Supports 4, 5, and 6 letter word modes. A new word is available every day for each mode.</p>
 		<a href="https://www.nytimes.com/games/wordle/index.html" target="_blank" rel="noopener noreferrer" class="about-link">
 			Play the official Wordle →
 		</a>
@@ -288,6 +308,41 @@
 		-webkit-text-fill-color: transparent;
 		background-clip: text;
 		user-select: none;
+	}
+
+	.title-area {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.25rem;
+	}
+
+	.mode-selector {
+		display: flex;
+		gap: 2px;
+		background: var(--bg-tertiary);
+		border-radius: 8px;
+		padding: 2px;
+	}
+	.mode-btn {
+		padding: 2px 10px;
+		border-radius: 6px;
+		border: none;
+		background: transparent;
+		color: var(--text-muted);
+		font-size: 0.7rem;
+		font-weight: 700;
+		cursor: pointer;
+		transition: all 0.2s ease;
+		line-height: 1.4;
+	}
+	.mode-btn:hover {
+		color: var(--text-primary);
+	}
+	.mode-btn.mode-active {
+		background: var(--color-accent);
+		color: white;
+		box-shadow: 0 1px 4px rgba(99, 102, 241, 0.3);
 	}
 
 	@media (min-width: 640px) {

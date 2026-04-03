@@ -1,14 +1,14 @@
 <script lang="ts">
 	import type { CharValue } from '$lib/types';
-	import { MAX_WORD_LENGTH } from '$constants/settings';
+	import { currentWordLength } from '$lib/game/gameModeStore';
 	import Tile from '../Tile.svelte';
 
 	export let guess: CharValue[];
 
-	$: emptyCells = Array.from(Array(MAX_WORD_LENGTH - guess.length));
+	$: emptyCells = Array.from(Array($currentWordLength - guess.length));
 </script>
 
-<div class="tile-row">
+<div class="tile-row" style="grid-template-columns: repeat({$currentWordLength}, 1fr)">
 	{#each guess as letter}
 		<Tile {letter} />
 	{/each}
@@ -20,7 +20,6 @@
 <style>
 	.tile-row {
 		display: grid;
-		grid-template-columns: repeat(5, 1fr);
 		gap: 5px;
 		justify-items: center;
 	}

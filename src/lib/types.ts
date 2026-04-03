@@ -1,3 +1,5 @@
+export type WordLengthMode = 4 | 5 | 6;
+
 export type CharStatus = 'absent' | 'present' | 'correct';
 
 export type CharValue =

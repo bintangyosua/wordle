@@ -1,6 +1,7 @@
 import { intervalToDuration } from 'date-fns';
-import { readable } from 'svelte/store';
-import { tomorrow } from './helpers';
+import { readable, derived, get } from 'svelte/store';
+import { getSolutionForMode } from './helpers';
+import { gameModeStore } from './gameModeStore';
 
 function addLeadingZero(time = 0) {
 	if (time < 10) {
@@ -10,6 +11,8 @@ function addLeadingZero(time = 0) {
 }
 
 function formatTimeFrame() {
+	const mode = get(gameModeStore);
+	const { tomorrow } = getSolutionForMode(mode);
 	const diff = intervalToDuration({ start: new Date(), end: tomorrow });
 	return `${addLeadingZero(diff.hours)}:${addLeadingZero(diff.minutes)}:${addLeadingZero(
 		diff.seconds

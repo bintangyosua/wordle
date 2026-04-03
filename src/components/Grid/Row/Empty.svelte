@@ -1,11 +1,11 @@
 <script lang="ts">
-	import { MAX_WORD_LENGTH } from '$constants/settings';
+	import { currentWordLength } from '$lib/game/gameModeStore';
 	import Tile from '../Tile.svelte';
 
-	const emptyTiles = Array.from(Array(MAX_WORD_LENGTH));
+	$: emptyTiles = Array.from(Array($currentWordLength));
 </script>
 
-<div class="tile-row">
+<div class="tile-row" style="grid-template-columns: repeat({$currentWordLength}, 1fr)">
 	{#each emptyTiles as _}
 		<Tile />
 	{/each}
@@ -14,7 +14,6 @@
 <style>
 	.tile-row {
 		display: grid;
-		grid-template-columns: repeat(5, 1fr);
 		gap: 5px;
 		justify-items: center;
 	}

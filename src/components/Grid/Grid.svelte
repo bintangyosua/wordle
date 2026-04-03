@@ -1,22 +1,22 @@
 <script lang="ts">
-	import { MAX_CHALLENGES } from '$constants/settings';
 	import { Complete, Current, Empty } from './Row';
 	import { gameStore } from '$lib/game/stateStore';
+	import { currentMaxChallenges } from '$lib/game/gameModeStore';
 	import type { CharValue } from '$lib/types';
 
 	export let currentGuess: CharValue[] = [];
 
 	$: emptyRows =
-		$gameStore.guesses.length < MAX_CHALLENGES - 1
-			? Array.from(Array(MAX_CHALLENGES - 1 - $gameStore.guesses.length))
+		$gameStore.guesses.length < $currentMaxChallenges - 1
+			? Array.from(Array($currentMaxChallenges - 1 - $gameStore.guesses.length))
 			: [];
 </script>
 
-<div class="game-grid">
+<div class="game-grid" style="grid-template-rows: repeat({$currentMaxChallenges}, 1fr)">
 	{#each $gameStore.guesses as { letters, statuses }}
 		<Complete {letters} {statuses} />
 	{/each}
-	{#if $gameStore.guesses.length < MAX_CHALLENGES}
+	{#if $gameStore.guesses.length < $currentMaxChallenges}
 		<Current guess={currentGuess} />
 	{/if}
 	{#each emptyRows as _, i (i)}
@@ -27,7 +27,6 @@
 <style>
 	.game-grid {
 		display: grid;
-		grid-template-rows: repeat(6, 1fr);
 		gap: 5px;
 		padding: 0.75rem 0;
 	}
