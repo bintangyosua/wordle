@@ -41,7 +41,7 @@
 
 	async function onCopied() {
 		const dataToShare = {
-			title: 'Svordle Stats',
+			title: 'Stats',
 			text: exportableStats
 		};
 
@@ -65,22 +65,13 @@
 	}
 
 	$: textareaStatus =
-		exportableStats === importTextarea
-			? 'same'
-			: importableStats === null
-				? 'invalid'
-				: 'default';
+		exportableStats === importTextarea ? 'same' : importableStats === null ? 'invalid' : 'default';
 </script>
 
 <div class="transfer-tabs">
 	{#each ['import', 'export'] as operation}
 		<label class="tab-item" class:active={importExportView === operation}>
-			<input
-				type="radio"
-				name="operations"
-				value={operation}
-				bind:group={importExportView}
-			/>
+			<input type="radio" name="operations" value={operation} bind:group={importExportView} />
 			{operation}
 		</label>
 	{/each}
@@ -97,21 +88,12 @@
 			bind:value={importTextarea}
 		></textarea>
 		<div class="transfer-actions">
-			<button
-				on:click={loadImported}
-				disabled={saveDisabled}
-				class="btn btn-primary"
-			>
+			<button on:click={loadImported} disabled={saveDisabled} class="btn btn-primary">
 				Import Stats
 			</button>
 		</div>
 	{:else}
-		<textarea
-			readonly
-			rows={6}
-			class="transfer-textarea"
-			bind:value={exportableStats}
-		></textarea>
+		<textarea readonly rows={6} class="transfer-textarea" bind:value={exportableStats}></textarea>
 		<div class="transfer-actions">
 			<button on:click={onCopied} class="btn btn-primary">
 				{#if copied}

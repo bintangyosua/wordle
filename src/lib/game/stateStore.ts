@@ -4,7 +4,7 @@ import { TILE_ANIMATION_DURATION, GAME_MODES, getKeyboardDelay } from '$constant
 import { getSolutionForMode, getRandomSolutionForMode, isWinningWord } from './helpers';
 import { statStore } from './statStore';
 import { browser } from '$app/environment';
-import { loadGameState, loadIsHardMode, saveGameState, saveIsHardMode, gameStateKey } from '$lib/localStorage';
+import { loadGameState, loadIsHardMode, saveGameState, saveIsHardMode, gameStateKey, saveGameHistory } from '$lib/localStorage';
 import { keyboardStore } from '$components/Keyboard';
 import { toastStore } from '$components/Toast';
 import { gameModeStore } from './gameModeStore';
@@ -185,11 +185,31 @@ function createGameStore() {
 
 				if (isWinningWord(lastItem!.letters.join(''), solution)) {
 					statStore.calculateStats(state.guesses.length, true, mode);
+					if (browser) {
+						saveGameHistory({
+							word: solution,
+							guesses: state.guesses.length,
+							maxGuesses: maxChallenges,
+							won: true,
+							mode,
+							timestamp: Date.now()
+						});
+					}
 					setTimeout(() => update((s) => ({ ...s, playState: 'won' })), RESPONSE_TIMEOUT);
 					return state;
 				}
 				if (state.guesses.length === maxChallenges) {
 					statStore.calculateStats(state.guesses.length, false, mode);
+					if (browser) {
+						saveGameHistory({
+							word: solution,
+							guesses: state.guesses.length,
+							maxGuesses: maxChallenges,
+							won: false,
+							mode,
+							timestamp: Date.now()
+						});
+					}
 					setTimeout(() => update((s) => ({ ...s, playState: 'lost' })), RESPONSE_TIMEOUT);
 				}
 				return state;

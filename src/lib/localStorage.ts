@@ -1,4 +1,4 @@
-import type { IGameStats, WordLengthMode } from './types';
+import type { IGameStats, WordLengthMode, IGameHistoryEntry } from './types';
 
 interface IStoredGameState {
 	guesses: string[];
@@ -12,6 +12,10 @@ export function gameStateKey(mode: WordLengthMode) {
 export function statsKey(mode: WordLengthMode) {
 	return `sw-gameStats-${mode}`;
 }
+export function historyKey(mode: WordLengthMode) {
+	return `sw-history-${mode}`;
+}
+const ALL_HISTORY_KEY = 'sw-history-all';
 
 // Legacy keys (for backward compat / debug)
 export const legacyGameStateKey = 'sw-gameState';
@@ -107,5 +111,41 @@ export function loadIsDarkMode() {
 		return theme ? theme === 'dark' : prefersDarkMode ? true : false;
 	} catch (error) {
 		return false;
+	}
+}
+
+// ===== Game History ===== //
+
+const MAX_HISTORY = 100;
+
+export function saveGameHistory(entry: IGameHistoryEntry) {
+	try {
+		// Save to all-history
+		const allRaw = localStorage.getItem(ALL_HISTORY_KEY);
+		const all: IGameHistoryEntry[] = allRaw ? JSON.parse(allRaw) : [];
+		all.unshift(entry);
+		if (all.length > MAX_HISTORY) all.length = MAX_HISTORY;
+		localStorage.setItem(ALL_HISTORY_KEY, JSON.stringify(all));
+
+		// Save to mode-specific history
+		const modeKey = historyKey(entry.mode);
+		const modeRaw = localStorage.getItem(modeKey);
+		const modeList: IGameHistoryEntry[] = modeRaw ? JSON.parse(modeRaw) : [];
+		modeList.unshift(entry);
+		if (modeList.length > MAX_HISTORY) modeList.length = MAX_HISTORY;
+		localStorage.setItem(modeKey, JSON.stringify(modeList));
+	} catch {
+		// ignore
+	}
+}
+
+export function loadGameHistory(mode?: WordLengthMode): IGameHistoryEntry[] {
+	try {
+		const key = mode != null ? historyKey(mode) : ALL_HISTORY_KEY;
+		const raw = localStorage.getItem(key);
+		if (!raw) return [];
+		return JSON.parse(raw) as IGameHistoryEntry[];
+	} catch {
+		return [];
 	}
 }

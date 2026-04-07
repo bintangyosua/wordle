@@ -56,3 +56,12 @@ export interface IKeyboardStore {
 	letterStatus: Map<CharValue, CharStatus>;
 	disabled: boolean;
 }
+
+export interface IGameHistoryEntry {
+	word: string;
+	guesses: number;
+	maxGuesses: number;
+	won: boolean;
+	mode: WordLengthMode;
+	timestamp: number;
+}

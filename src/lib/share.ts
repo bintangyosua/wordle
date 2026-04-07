@@ -77,14 +77,14 @@ export async function shareGameStatus(isHighContrast: boolean, isDarkMode: boole
 	const { solutionIndex } = getSolutionForMode(mode);
 	const maxChallenges = GAME_MODES[mode].maxChallenges;
 
-	let scoreHeader = `Svordle ${mode}L #${solutionIndex + 1} ${
+	let scoreHeader = `${mode}L #${solutionIndex + 1} ${
 		lost ? 'X' : gameState.guesses.length
 	}/${maxChallenges}`;
 
 	if (gameState.isHardMode) scoreHeader = `${scoreHeader} *`;
 
 	const dataToShare = {
-		title: 'Svordle Score',
+		title: 'Score',
 		text: `${scoreHeader}\n\n${generateEmojiGrid(
 			generateTiles(isHighContrast, isDarkMode),
 			gameState.guesses

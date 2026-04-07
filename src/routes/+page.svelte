@@ -37,11 +37,11 @@
 </script>
 
 <svelte:head>
-	<title>Svordle Two</title>
+	<title>Cradle</title>
 	<meta name="description" content="An updated wordle clone rebuilt with svelte" />
-	<meta name="og:title" content="Svordle Two" />
+	<meta name="og:title" content="Cradle" />
 	<meta name="og:description" content="An updated wordle clone rebuilt with svelte" />
-	<meta name="og:site_name" content="Svordle Two" />
+	<meta name="og:site_name" content="Cradle" />
 	<meta property="og:type" content="website" />
 </svelte:head>
 
