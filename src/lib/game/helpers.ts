@@ -14,15 +14,53 @@ export const WIN_MESSAGES = [
 	'Call it a comeback!',
 	'Phew, nice work!',
 	'Just in time!',
-	'Close call!'
+	'Close call!',
+	'Nailed it!',
+	'Perfecto!',
+	'Flawless!',
+	'Impressive!',
+	'Genius!',
+	'Masterful!',
+	'Too easy!',
+	'Piece of cake!',
+	'Easy peasy!',
+	'Smooth!',
+	'Clean sweep!',
+	'Victory!',
+	'Unstoppable!',
+	'On fire!',
+	'Too fast!',
+	'Too slow!',
+	'Lucky guess!',
+	'Lucky break!',
+	'Lucky shot!',
+	'Lucky charm!',
+	'Lucky streak!',
+	'Lucky day!',
+	'Lucky break!',
+	'Lucky shot!',
+	'Lucky charm!',
+	'Lucky streak!'
 ];
 
-function getWordListForMode(mode: WordLengthMode) {
+export function getWordListForMode(mode: WordLengthMode) {
 	switch (mode) {
-		case 4: return { solutions: WORDS_4, valid: WORDS_4 };
-		case 5: return { solutions: WORDS_5, valid: [...WORDS_5, ...VALIDGUESSES, ...ALL_WORDS_5] };
-		case 6: return { solutions: WORDS_6.slice(0, 2000), valid: WORDS_6 };
+		case 4:
+			return { solutions: WORDS_4, valid: WORDS_4 };
+		case 5:
+			return { solutions: WORDS_5, valid: [...WORDS_5, ...VALIDGUESSES, ...ALL_WORDS_5] };
+		case 6:
+			return { solutions: WORDS_6.slice(0, 2000), valid: WORDS_6 };
 	}
+}
+
+export function getRandomSolutionForMode(mode: WordLengthMode, exclude?: string[]): string {
+	const { solutions } = getWordListForMode(mode);
+	const excludeSet = new Set((exclude ?? []).map((w) => w.toLowerCase()));
+	const candidates = solutions.filter((w) => !excludeSet.has(w.toLowerCase()));
+	const pool = candidates.length > 0 ? candidates : solutions;
+	const idx = Math.floor(Math.random() * pool.length);
+	return pool[idx].toUpperCase();
 }
 
 function getWordOfTheDay(mode: WordLengthMode) {

@@ -8,7 +8,7 @@
 	import { gameStateKey, saveHighContrast, saveIsDarkMode, statsKey } from '$lib/localStorage';
 	import { GAME_MODES } from '$constants/settings';
 	import { statStore } from '$lib/game/statStore';
-	import { gameStore } from '$lib/game/stateStore';
+	import { gameStore, overrideSolution } from '$lib/game/stateStore';
 	import { gameModeStore, currentWordLength, currentMaxChallenges, modeChangeSignal } from '$lib/game/gameModeStore';
 	import Toggle from '$components/Toggle.svelte';
 	import Modal from '$components/Modal.svelte';
@@ -91,6 +91,12 @@
 		stats.closeModal();
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-call
 		transfer.openModal();
+	}
+
+	function handlePlayAgain() {
+		stats.closeModal();
+		gameStore.playAgain();
+		modeChangeSignal.update(n => n + 1);
 	}
 </script>
 
@@ -242,11 +248,16 @@
 		<Graph />
 		{#if $gameStore.playState !== 'playing'}
 			<div class="stats-endgame">
-				<div class="countdown-section">
-					<div class="countdown-label">Next Word</div>
-					<div class="countdown-time">{$countdownClock}</div>
+				{#if !$overrideSolution}
+					<div class="countdown-section">
+						<div class="countdown-label">Next Word</div>
+						<div class="countdown-time">{$countdownClock}</div>
+					</div>
+				{/if}
+				<div class="endgame-actions">
+					<button on:click={handlePlayAgain} type="button" class="play-again-btn">Play Again</button>
+					<button on:click={showCopyResponse} type="button" class="share-btn">Share ↗</button>
 				</div>
-				<button on:click={showCopyResponse} type="button" class="share-btn">Share ↗</button>
 			</div>
 		{/if}
 	</div>
@@ -511,6 +522,31 @@
 	.share-btn:hover {
 		filter: brightness(1.1);
 		transform: translateY(-1px);
+	}
+
+	/* ===== Endgame action buttons ===== */
+	.endgame-actions {
+		display: flex;
+		gap: 0.75rem;
+	}
+	.play-again-btn {
+		padding: 0.6rem 2rem;
+		border-radius: 10px;
+		border: none;
+		background: var(--color-correct);
+		color: white;
+		font-size: 0.9rem;
+		font-weight: 700;
+		cursor: pointer;
+		transition: all 0.2s ease;
+		box-shadow: 0 2px 8px rgba(83, 141, 78, 0.4);
+	}
+	.play-again-btn:hover {
+		filter: brightness(1.1);
+		transform: translateY(-1px);
+	}
+	.play-again-btn:active {
+		transform: translateY(0);
 	}
 
 	/* ===== Transfer footer ===== */

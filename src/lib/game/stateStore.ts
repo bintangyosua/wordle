@@ -1,13 +1,22 @@
 import type { CharValue, CharStatus, IGameStore, WordLengthMode } from '$lib/types';
 import { writable, get } from 'svelte/store';
 import { TILE_ANIMATION_DURATION, GAME_MODES, getKeyboardDelay } from '$constants/settings';
-import { getSolutionForMode, isWinningWord } from './helpers';
+import { getSolutionForMode, getRandomSolutionForMode, isWinningWord } from './helpers';
 import { statStore } from './statStore';
 import { browser } from '$app/environment';
-import { loadGameState, loadIsHardMode, saveGameState, saveIsHardMode } from '$lib/localStorage';
+import { loadGameState, loadIsHardMode, saveGameState, saveIsHardMode, gameStateKey } from '$lib/localStorage';
 import { keyboardStore } from '$components/Keyboard';
 import { toastStore } from '$components/Toast';
 import { gameModeStore } from './gameModeStore';
+
+// Override solution store: when set, this takes priority over the daily word
+export const overrideSolution = writable<string | null>(null);
+
+export function getCurrentSolution(mode: WordLengthMode): string {
+	const override = get(overrideSolution);
+	if (override) return override;
+	return getSolutionForMode(mode).solution;
+}
 
 function helper(letters: CharValue[], solution: string) {
 	const splitSolution = solution.split('');
@@ -43,7 +52,7 @@ function helper(letters: CharValue[], solution: string) {
 }
 
 function initializeStoreData(mode: WordLengthMode): IGameStore {
-	const { solution } = getSolutionForMode(mode);
+	const solution = getCurrentSolution(mode);
 	const maxChallenges = GAME_MODES[mode].maxChallenges;
 
 	const gameState: IGameStore = {
@@ -82,12 +91,26 @@ function createGameStore() {
 	return {
 		subscribe,
 		reinitialize: (mode: WordLengthMode) => {
+			overrideSolution.set(null);
 			keyboardStore.reset();
 			const newState = initializeStoreData(mode);
 			set(newState);
 		},
 		reset: () =>
 			set({ playState: 'playing', guesses: [], isHardMode: false, hardModeError: false }),
+		playAgain: () => {
+			const mode = get(gameModeStore);
+			// Pick a random word, excluding the current solution
+			const currentSol = getCurrentSolution(mode);
+			const newSolution = getRandomSolutionForMode(mode, [currentSol]);
+			overrideSolution.set(newSolution);
+			// Clear localStorage for this mode so old state doesn't leak
+			if (browser) {
+				localStorage.removeItem(gameStateKey(mode));
+			}
+			keyboardStore.reset();
+			set({ playState: 'playing', guesses: [], isHardMode: loadIsHardMode(), hardModeError: false });
+		},
 		setHardMode: (val: boolean) => {
 			update((state) => {
 				state.isHardMode = val;
@@ -136,7 +159,7 @@ function createGameStore() {
 		},
 		addGuess: (guess: CharValue[]) => {
 			const mode = get(gameModeStore);
-			const { solution } = getSolutionForMode(mode);
+			const solution = getCurrentSolution(mode);
 			update((state) => {
 				state.hardModeError = false;
 				const guessWithStatus = helper(guess, solution);
@@ -149,7 +172,7 @@ function createGameStore() {
 		},
 		determineGameState: () => {
 			const mode = get(gameModeStore);
-			const { solution } = getSolutionForMode(mode);
+			const solution = getCurrentSolution(mode);
 			const maxChallenges = GAME_MODES[mode].maxChallenges;
 			const wordLength = GAME_MODES[mode].wordLength;
 			const RESPONSE_TIMEOUT = getKeyboardDelay(wordLength) + TILE_ANIMATION_DURATION;

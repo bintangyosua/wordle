@@ -3,7 +3,7 @@
 	import { Keyboard } from '../components/Keyboard';
 	import { toastStore } from '../components/Toast';
 	import { WIN_MESSAGES, getSolutionForMode } from '$lib/game/helpers';
-	import { gameStore } from '$lib/game/stateStore';
+	import { gameStore, overrideSolution } from '$lib/game/stateStore';
 	import { gameModeStore, modeChangeSignal } from '$lib/game/gameModeStore';
 	import type { CharValue } from '$lib/types';
 
@@ -14,7 +14,7 @@
 		currentGuess = [];
 	}
 
-	$: currentSolution = getSolutionForMode($gameModeStore).solution;
+	$: currentSolution = $overrideSolution ?? getSolutionForMode($gameModeStore).solution;
 
 	$: {
 		if ($gameStore.playState === 'won') {
